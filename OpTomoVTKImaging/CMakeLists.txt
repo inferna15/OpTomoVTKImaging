@@ -6,7 +6,7 @@ find_package(VTK REQUIRED)
 
 include(${VTK_USE_FILE})
 # Kaynağı bu projenin yürütülebilir dosyasına ekleyin.
-add_library (OpTomoVTKImaging SHARED  "OpTomoVTKImaging.h" "OpTomoVTKImaging.cpp"  "Classes/Model.h" "Classes/Model.cpp" "Classes/VolumePipeline.h"   "Classes/VolumePipeline.cpp" "Classes/ReslicePipeline.h" "Classes/ReslicePipeline.cpp" "Classes/Lines2D.h" "Classes/Lines2D.cpp")
+add_library (OpTomoVTKImaging SHARED  "OpTomoVTKImaging.h" "OpTomoVTKImaging.cpp" "Model.h" "Model.cpp")
 
 target_compile_definitions(OpTomoVTKImaging PRIVATE "MODEL_EXPORTS")
 set_target_properties(OpTomoVTKImaging PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS YES)
