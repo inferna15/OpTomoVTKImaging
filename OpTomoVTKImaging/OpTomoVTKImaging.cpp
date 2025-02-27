@@ -1,7 +1,7 @@
 #include "OpTomoVTKImaging.h"
 
 extern "C" MODEL_API Model* StartUp(const char* path) {
-	return new Model();
+	return new Model(path);
 }
 
 extern "C" MODEL_API void* GetWindow(Model* model) {
@@ -9,7 +9,7 @@ extern "C" MODEL_API void* GetWindow(Model* model) {
 }
 
 extern "C" MODEL_API void Work(Model* model) {
-	model->Initialize();
+	model->runMainPipeline();
 }
 
 extern "C" MODEL_API void CleanUp(Model* model) {

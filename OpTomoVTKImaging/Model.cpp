@@ -1,11 +1,30 @@
 #include "Model.h"
 
+Model::Model(const char* path) {
+	dicomPath = path;
+}
+
+void* Model::GetWindow() {
+	renderWindow->InitializeFromCurrentContext();
+	return renderWindow->GetGenericWindowId();
+}
+
+void Model::SetWindowSize(int height, int width) {
+	renderWindow->SetSize(width, height);
+	this->width = width;
+	this->height = height;
+}
+
 vtkAlgorithmOutput* Model::readDicom(const char* path) {
 	dicomReader->SetDirectoryName(path);
 	dicomReader->Update();
 
 	dicomReader->GetDataExtent(extent);
 	dicomReader->GetDataSpacing(spacing);
+
+	realSizeOfX = extent[1] - extent[0];
+	realSizeOfY = extent[3] - extent[2];
+	realSizeOfZ = extent[5] - extent[4];
 
 	double doubleRange[2];
 	dicomReader->GetOutput()->GetScalarRange(doubleRange);
@@ -40,10 +59,11 @@ void Model::setExtractVOI(int minX, int maxX, int minY, int maxY, int minZ, int 
 }
 
 void Model::runAxialSlicePipeline(vtkAlgorithmOutput* input) {
+	// Main Axial Pipeline
 	resliceAxial = vtkSmartPointer<vtkImageReslice>::New();
 	resliceAxial->SetInputConnection(input);
 	resliceAxial->SetOutputDimensionality(2);
-	resliceAxial->SetResliceAxesDirectionCosines(1, 0, 0, 0, 1, 0, 0, 0, 1);
+	resliceAxial->SetResliceAxesDirectionCosines(1, 0, 0, 0, 0, 1, 0, 1, 0);
 	resliceAxial->SetResliceAxesOrigin(0, layer[1] * spacing[1], 0);
 	resliceAxial->SetInterpolationModeToCubic();
 
@@ -72,7 +92,7 @@ void Model::runSagittalSlicePipeline(vtkAlgorithmOutput* input) {
 	resliceSagittal = vtkSmartPointer<vtkImageReslice>::New();
 	resliceSagittal->SetInputConnection(input);
 	resliceSagittal->SetOutputDimensionality(2);
-	resliceSagittal->SetResliceAxesDirectionCosines(0, 0, -1, 0, 1, 0, 1, 0, 0);
+	resliceSagittal->SetResliceAxesDirectionCosines(0, 0, 1, 0, 1, 0, 1, 0, 0);
 	resliceSagittal->SetResliceAxesOrigin(layer[0] * spacing[0], 0, 0);
 	resliceSagittal->SetInterpolationModeToCubic();
 
@@ -101,7 +121,7 @@ void Model::runFrontalSlicePipeline(vtkAlgorithmOutput* input) {
 	resliceFrontal = vtkSmartPointer<vtkImageReslice>::New();
 	resliceFrontal->SetInputConnection(input);
 	resliceFrontal->SetOutputDimensionality(2);
-	resliceFrontal->SetResliceAxesDirectionCosines(1, 0, 0, 0, 0, -1, 0, 1, 0);
+	resliceFrontal->SetResliceAxesDirectionCosines(1, 0, 0, 0, 1, 0, 0, 0, 1);
 	resliceFrontal->SetResliceAxesOrigin(0, 0, layer[2] * spacing[2]);
 	resliceFrontal->SetInterpolationModeToCubic();
 
@@ -147,9 +167,82 @@ void Model::runVolume3DPipeline(vtkAlgorithmOutput* input) {
 	renderWindow->AddRenderer(rendererVolume);
 }
 
-void Model::runMainPipeline(const char* path) {
+void Model::setSizeOfSlices() {
+	if (isMax) {
+		slicePanelHeight = height;
+		slicePanelWidth = width;
+	}
+	else {
+		slicePanelHeight = height / 2;
+		slicePanelWidth = width / 2;
+	}
+	centerPointOfSliceOnX = slicePanelWidth / 2;
+	centerPointOfSliceOnY = slicePanelHeight / 2;
+
+	// Axial
+	if (realSizeOfX / slicePanelWidth >= realSizeOfZ / slicePanelHeight) {
+		ratio[1] = slicePanelWidth / realSizeOfX;
+	}
+	else {
+		ratio[1] = slicePanelHeight / realSizeOfZ;
+	}
+	resliceAxial->SetOutputExtent(
+		centerPointOfSliceOnX + (ratio[1] * zoom[1] * motion[0]) - (zoom[1] * centerPointOfSliceOnX), 
+		centerPointOfSliceOnX + (ratio[1] * zoom[1] * motion[0]) + (zoom[1] * centerPointOfSliceOnX), 
+		centerPointOfSliceOnY + (ratio[1] * zoom[1] * motion[2]) - (zoom[1] * centerPointOfSliceOnY),
+		centerPointOfSliceOnY + (ratio[1] * zoom[1] * motion[2]) + (zoom[1] * centerPointOfSliceOnY),
+		0, 0
+	);
+	resliceAxial->SetOutputSpacing(
+		spacing[0] / (ratio[1] * zoom[1]),
+		spacing[1] / (ratio[1] * zoom[1]),
+		spacing[2] / (ratio[1] * zoom[1])
+	);
+
+	// Sagittal
+	if (realSizeOfZ / slicePanelWidth >= realSizeOfY / slicePanelHeight) {
+		ratio[0] = slicePanelWidth / realSizeOfZ;
+	}
+	else {
+		ratio[0] = slicePanelHeight / realSizeOfY;
+	}
+	resliceSagittal->SetOutputExtent(
+		centerPointOfSliceOnX + (ratio[0] * zoom[0] * motion[2]) - (zoom[0] * centerPointOfSliceOnX),
+		centerPointOfSliceOnX + (ratio[0] * zoom[0] * motion[2]) + (zoom[0] * centerPointOfSliceOnX),
+		centerPointOfSliceOnY + (ratio[0] * zoom[0] * motion[1]) - (zoom[0] * centerPointOfSliceOnY),
+		centerPointOfSliceOnY + (ratio[0] * zoom[0] * motion[1]) + (zoom[0] * centerPointOfSliceOnY),
+		0, 0
+	);
+	resliceSagittal->SetOutputSpacing(
+		spacing[0] / (ratio[0] * zoom[0]),
+		spacing[1] / (ratio[0] * zoom[0]),
+		spacing[2] / (ratio[0] * zoom[0])
+	);
+
+	// Frontal
+	if (realSizeOfX / slicePanelWidth >= realSizeOfY / slicePanelHeight) {
+		ratio[2] = slicePanelWidth / realSizeOfX;
+	}
+	else {
+		ratio[2] = slicePanelHeight / realSizeOfY;
+	}
+	resliceFrontal->SetOutputExtent(
+		centerPointOfSliceOnX + (ratio[2] * zoom[2] * motion[0]) - (zoom[2] * centerPointOfSliceOnX),
+		centerPointOfSliceOnX + (ratio[2] * zoom[2] * motion[0]) + (zoom[2] * centerPointOfSliceOnX),
+		centerPointOfSliceOnY + (ratio[2] * zoom[2] * motion[1]) - (zoom[2] * centerPointOfSliceOnY),
+		centerPointOfSliceOnY + (ratio[2] * zoom[2] * motion[1]) + (zoom[2] * centerPointOfSliceOnY),
+		0, 0
+	);
+	resliceFrontal->SetOutputSpacing(
+		spacing[0] / (ratio[2] * zoom[2]),
+		spacing[1] / (ratio[2] * zoom[2]),
+		spacing[2] / (ratio[2] * zoom[2])
+	);
+}
+
+void Model::runMainPipeline() {
 	dicomReader = vtkSmartPointer<vtkDICOMImageReader>::New();
-	vtkAlgorithmOutput* outputOfReader = readDicom(path);
+	vtkAlgorithmOutput* outputOfReader = readDicom(dicomPath);
 
 	colorFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
 	setColorFunction(range[0], range[1]);

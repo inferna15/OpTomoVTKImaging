@@ -18,6 +18,14 @@
 #include <vtkVolume.h>
 #include <vtkImageData.h>
 #include <vtkAlgorithmOutput.h>
+#include <vtkAutoInit.h>
+
+#pragma region VTK_MODULE_INIT
+VTK_MODULE_INIT(vtkRenderingVolumeOpenGL2);
+VTK_MODULE_INIT(vtkRenderingOpenGL2);
+VTK_MODULE_INIT(vtkInteractionStyle);
+VTK_MODULE_INIT(vtkRenderingFreeType);
+#pragma endregion
 
 class Model {
 
@@ -69,6 +77,7 @@ private:
 #pragma endregion
 #pragma region Other Fields Definition
 private:
+	const char* dicomPath;
 	int extent[6];
 	double spacing[3];
 	int layer[3];
@@ -81,10 +90,17 @@ private:
 	int height;
 	bool isMax;
 	int range[2];
+	int realSizeOfX, realSizeOfY, realSizeOfZ;
+	int slicePanelHeight, slicePanelWidth;
+	int centerPointOfSliceOnX, centerPointOfSliceOnY;
 
 #pragma endregion
 
 public:
+	Model(const char* path);
+	void* GetWindow();
+	void SetWindowSize(int height, int width);
+
 	/// <summary>
 	/// Dicom görüntüleri okur.
 	/// Extent, Spacing, Range, WindowColor ve LevelColor deðerlerini alýr.
@@ -131,9 +147,11 @@ public:
 
 	void runVolume3DPipeline(vtkAlgorithmOutput* input);
 
+	void setSizeOfSlices();
+
 	/// <summary>
 	/// Ana pipeline hattýný çalýþtýrýr.
 	/// </summary>
 	/// <param name="path">Dicom görüntülerin bulunduðu klasörün yolu.</param>
-	void runMainPipeline(const char* path);
+	void runMainPipeline();
 };

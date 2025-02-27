@@ -11,13 +11,7 @@
 	#define MODEL_API
 #endif
 
-#include <vtkRenderWindow.h>
-#include <vtkAutoInit.h>
-
-VTK_MODULE_INIT(vtkRenderingVolumeOpenGL2);
-VTK_MODULE_INIT(vtkRenderingOpenGL2);
-VTK_MODULE_INIT(vtkInteractionStyle);
-VTK_MODULE_INIT(vtkRenderingFreeType);
+#include "Model.h"
 
 extern "C" {
 	MODEL_API Model* StartUp(const char* path);
