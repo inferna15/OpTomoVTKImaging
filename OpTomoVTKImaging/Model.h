@@ -19,6 +19,11 @@
 #include <vtkImageData.h>
 #include <vtkAlgorithmOutput.h>
 #include <vtkAutoInit.h>
+#include <vtkPolyDataMapper2D.h>;
+#include <vtkProperty2D.h>
+#include <vtkActor.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkProperty.h>
 
 #pragma region VTK_MODULE_INIT
 VTK_MODULE_INIT(vtkRenderingVolumeOpenGL2);
@@ -45,7 +50,7 @@ private:
 	vtkSmartPointer<vtkImageMapper> mapperAxial;
 	vtkSmartPointer<vtkActor2D> actorAxial;
 	vtkSmartPointer<vtkRenderer> rendererAxial;
-	vtkSmartPointer<vtkLineSource> linesAxial[2]; // Eski versiyona göre 0. ve 4. çizgiler
+	vtkSmartPointer<vtkLineSource> linesAxial[2]; // Eski versiyona göre 2. ve 3. çizgiler
 
 	// Sagittal
 	vtkSmartPointer<vtkImageReslice> resliceSagittal;
@@ -53,7 +58,7 @@ private:
 	vtkSmartPointer<vtkImageMapper> mapperSagittal;
 	vtkSmartPointer<vtkActor2D> actorSagittal;
 	vtkSmartPointer<vtkRenderer> rendererSagittal;
-	vtkSmartPointer<vtkLineSource> linesSagittal[2]; // Eski versiyona göre 3. ve 5. çizgiler
+	vtkSmartPointer<vtkLineSource> linesSagittal[2]; // Eski versiyona göre 0. ve 1. çizgiler
 
 	// Frontal
 	vtkSmartPointer<vtkImageReslice> resliceFrontal;
@@ -61,7 +66,7 @@ private:
 	vtkSmartPointer<vtkImageMapper> mapperFrontal;
 	vtkSmartPointer<vtkActor2D> actorFrontal;
 	vtkSmartPointer<vtkRenderer> rendererFrontal;
-	vtkSmartPointer<vtkLineSource> linesFrontal[2]; // Eski versiyona göre 1. ve 2. çizgiler
+	vtkSmartPointer<vtkLineSource> linesFrontal[2]; // Eski versiyona göre 4. ve 5. çizgiler
 
 	// Volume
 	vtkSmartPointer<vtkSmartVolumeMapper> mapperVolume;
@@ -81,13 +86,11 @@ private:
 	int extent[6];
 	double spacing[3];
 	int layer[3];
-	double windowColorValue;
-	double levelColorValue;
+	double windowColorValue, levelColorValue;
 	double ratio[3];
 	int motion[3];
 	double zoom[3];
-	int width;
-	int height;
+	int width, height;
 	bool isMax;
 	int range[2];
 	int realSizeOfX, realSizeOfY, realSizeOfZ;
@@ -148,6 +151,10 @@ public:
 	void runVolume3DPipeline(vtkAlgorithmOutput* input);
 
 	void setSizeOfSlices();
+
+	vtkSmartPointer<vtkActor2D> run2DLinePipeline(vtkAlgorithmOutput* input);
+
+	vtkSmartPointer<vtkActor> run3DLinePipeline(vtkAlgorithmOutput* input);
 
 	/// <summary>
 	/// Ana pipeline hattýný çalýþtýrýr.

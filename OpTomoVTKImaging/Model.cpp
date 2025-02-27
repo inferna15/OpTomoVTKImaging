@@ -85,6 +85,12 @@ void Model::runAxialSlicePipeline(vtkAlgorithmOutput* input) {
 	rendererAxial->SetBackground(0, 0, 0);
 	rendererAxial->SetViewport(0, 0.5, 0.5, 1);
 
+	// Çizgiler
+	linesSagittal[0] = vtkSmartPointer<vtkLineSource>::New();
+	linesFrontal[0] = vtkSmartPointer<vtkLineSource>::New();
+	rendererAxial->AddActor(run2DLinePipeline(linesSagittal[0]->GetOutputPort()));
+	rendererAxial->AddActor(run2DLinePipeline(linesFrontal[0]->GetOutputPort()));
+
 	renderWindow->AddRenderer(rendererAxial);
 }
 
@@ -113,6 +119,12 @@ void Model::runSagittalSlicePipeline(vtkAlgorithmOutput* input) {
 	rendererSagittal->AddActor(actorSagittal);
 	rendererSagittal->SetBackground(0, 0, 0);
 	rendererSagittal->SetViewport(0.5, 0.5, 1, 1);
+
+	// Çizgiler
+	linesAxial[1] = vtkSmartPointer<vtkLineSource>::New();
+	linesFrontal[1] = vtkSmartPointer<vtkLineSource>::New();
+	rendererSagittal->AddActor(run2DLinePipeline(linesAxial[1]->GetOutputPort()));
+	rendererSagittal->AddActor(run2DLinePipeline(linesFrontal[1]->GetOutputPort()));
 
 	renderWindow->AddRenderer(rendererSagittal);
 }
@@ -143,6 +155,12 @@ void Model::runFrontalSlicePipeline(vtkAlgorithmOutput* input) {
 	rendererFrontal->SetBackground(0, 0, 0);
 	rendererFrontal->SetViewport(0, 0, 0.5, 0.5);
 
+	// Çizgiler
+	linesAxial[0] = vtkSmartPointer<vtkLineSource>::New();
+	linesSagittal[1] = vtkSmartPointer<vtkLineSource>::New();
+	rendererSagittal->AddActor(run2DLinePipeline(linesAxial[0]->GetOutputPort()));
+	rendererSagittal->AddActor(run2DLinePipeline(linesSagittal[1]->GetOutputPort()));
+
 	renderWindow->AddRenderer(rendererFrontal);
 }
 
@@ -163,6 +181,22 @@ void Model::runVolume3DPipeline(vtkAlgorithmOutput* input) {
 	rendererVolume->AddActor(actorVolume);
 	rendererVolume->SetBackground(0, 0, 0);
 	rendererVolume->SetViewport(0.5, 0, 1, 0.5);
+
+	// Çizgiler
+	for (int i = 0; i < 4; i++) {
+		linesAxialVolume[i] = vtkSmartPointer<vtkLineSource>::New();
+		linesSagittalVolume[i] = vtkSmartPointer<vtkLineSource>::New();
+		linesFrontalVolume[i] = vtkSmartPointer<vtkLineSource>::New();
+		rendererVolume->AddActor(run3DLinePipeline(linesAxialVolume[i]->GetOutputPort()));
+		rendererVolume->AddActor(run3DLinePipeline(linesSagittalVolume[i]->GetOutputPort()));
+		rendererVolume->AddActor(run3DLinePipeline(linesFrontalVolume[i]->GetOutputPort()));
+	}
+	lineAxialAndSagittalVolume = vtkSmartPointer<vtkLineSource>::New();
+	lineAxialAndFrontalVolume = vtkSmartPointer<vtkLineSource>::New();
+	lineFrontalAndSagittalVolume = vtkSmartPointer<vtkLineSource>::New();
+	rendererVolume->AddActor(run3DLinePipeline(lineAxialAndSagittalVolume->GetOutputPort()));
+	rendererVolume->AddActor(run3DLinePipeline(lineAxialAndFrontalVolume->GetOutputPort()));
+	rendererVolume->AddActor(run3DLinePipeline(lineFrontalAndSagittalVolume->GetOutputPort()));
 
 	renderWindow->AddRenderer(rendererVolume);
 }
@@ -238,6 +272,26 @@ void Model::setSizeOfSlices() {
 		spacing[1] / (ratio[2] * zoom[2]),
 		spacing[2] / (ratio[2] * zoom[2])
 	);
+}
+
+vtkSmartPointer<vtkActor2D> Model::run2DLinePipeline(vtkAlgorithmOutput* input) {
+	vtkSmartPointer<vtkPolyDataMapper2D> lineMapper = vtkSmartPointer<vtkPolyDataMapper2D>::New();
+	vtkSmartPointer<vtkActor2D> lineActor = vtkSmartPointer<vtkActor2D>::New();
+	lineMapper->SetInputConnection(input);
+	lineActor->SetMapper(lineMapper);
+	lineActor->GetProperty()->SetLineWidth(1);
+	lineActor->GetProperty()->SetColor(0.5, 0.5, 0.5);
+	return lineActor;
+}
+
+vtkSmartPointer<vtkActor> Model::run3DLinePipeline(vtkAlgorithmOutput* input) {
+	vtkSmartPointer<vtkPolyDataMapper> lineMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	vtkSmartPointer<vtkActor> lineActor = vtkSmartPointer<vtkActor>::New();
+	lineMapper->SetInputConnection(input);
+	lineActor->SetMapper(lineMapper);
+	lineActor->GetProperty()->SetLineWidth(1);
+	lineActor->GetProperty()->SetColor(0.5, 0.5, 0.5);
+	return lineActor;
 }
 
 void Model::runMainPipeline() {
