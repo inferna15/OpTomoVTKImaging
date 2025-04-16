@@ -24,6 +24,7 @@
 #include <vtkActor.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
+#include <vtkCallbackCommand.h>
 
 #pragma region VTK_MODULE_INIT
 VTK_MODULE_INIT(vtkRenderingVolumeOpenGL2);
@@ -43,6 +44,7 @@ private:
 	vtkSmartPointer<vtkPiecewiseFunction> opacityFunction;
 	vtkSmartPointer<vtkRenderWindow> renderWindow;
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
+	vtkSmartPointer<vtkCallbackCommand> callbackCommand;
 
 	// Axial
 	vtkSmartPointer<vtkImageReslice> resliceAxial;
@@ -110,7 +112,7 @@ public:
 	/// </summary>
 	/// <param name="path">Dicom görüntülerin bulunduðu klasörün yolu.</param>
 	/// <returns>vtkDICOMImageReader->GetOutputPort()</returns>
-	vtkAlgorithmOutput* readDicom(const char* path);
+	vtkAlgorithmOutput* readDicom();
 
 	/// <summary>
 	/// ColorFunction için nokta deðerlerini deðiþtirir.
@@ -125,11 +127,6 @@ public:
 	/// <param name="min">Alt sýnýr deðeri</param>
 	/// <param name="max">Üst sýnýr deðeri</param>
 	void setOpacityFunction(int min, int max);
-
-	/// <summary>
-	/// Layer deðerlerini extent deðerlerine göre baþlangýç deðerine ayarlar.
-	/// </summary>
-	void setLayerToDefault();
 
 	/// <summary>
 	/// ExtractVOI sýnýr deðerlerini ayarlar.
@@ -155,6 +152,22 @@ public:
 	vtkSmartPointer<vtkActor2D> run2DLinePipeline(vtkAlgorithmOutput* input);
 
 	vtkSmartPointer<vtkActor> run3DLinePipeline(vtkAlgorithmOutput* input);
+
+	void set2DAxialLines();
+
+	void set2DSagittalLines();
+
+	void set2DFrontalLines();
+
+	void set3DAxialLines();
+
+	void set3DSagittalLines();
+
+	void set3DFrontalLines();
+
+	void set3DBothLines();
+
+	void setPanels();
 
 	/// <summary>
 	/// Ana pipeline hattýný çalýþtýrýr.

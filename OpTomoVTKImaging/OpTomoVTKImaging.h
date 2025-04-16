@@ -16,7 +16,7 @@
 extern "C" {
 	MODEL_API Model* StartUp(const char* path);
 	MODEL_API void* GetWindow(Model* model);
-	MODEL_API void Work(Model* model);
+	MODEL_API int Work(Model* model);
 	MODEL_API void CleanUp(Model* model);
 	MODEL_API void SetWindowSize(Model* model, int height, int width);
 }
